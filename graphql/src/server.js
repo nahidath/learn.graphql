@@ -23,6 +23,7 @@ const typeDefs = gql`
   
   input UserInput {
     name: String!
+    email: String!
   }
   
   type Query {
@@ -34,8 +35,8 @@ const typeDefs = gql`
   type Mutation {
     createUser(name: String!, email: String!): User!
     createPost(input: UserInput!, content: String!): Post!
-    updatePost(id: Int!, input: UserInput!, content: String!): Post!
-    delatePost(id: Int!): Post!
+    updatePost(Postid: Int!, content: String!): Post!
+    deletePost(id: Int!): String!
   }
   
   type Subscription {
@@ -106,7 +107,9 @@ const  resolvers = {
     Query : {
         allusers : () => users,
         allPosts: () => posts,
-        onePost : () =>posts,
+        onePost : (root, args) =>{
+            return posts.find(onePost => onePost.id === args.id);
+        },
         //books : () => db.book.findMany()
         /*author : () =>{
             /**
@@ -131,15 +134,34 @@ const  resolvers = {
             users.push(newuser)
             return newuser
         },
-        createPost : (parents, args) => {
+        createPost : (_, {input, content}) => {
             let idCount = posts.length;
             const newpost = {
                 id : idCount+1,
-                author : args.author,
-                content : args.content,
+                author : {
+                    name : input.name,
+                    email : input.email,
+                },
+                content : content,
             }
             posts.push(newpost)
             return newpost
+        },
+        updatePost : (_, { Postid, content }) => {
+            const updatepost = posts.find( updatePost => updatePost.id === Postid);
+            if (!updatepost) {
+                throw new Error(`Couldn’t find post with id ${Postid}`);
+            }
+            updatepost.content = content;
+            return updatepost;
+        },
+        deletePost : (root, args) => {
+            const deletepost = posts.find( deletePost => deletePost.id === args.id);
+            if (!deletepost) {
+                throw new Error(`Couldn’t find post with id ${Postid}`);
+            }
+            posts.pop(deletepost)
+            return "Post with id ${Postid} deleted"
         }
     }
 
